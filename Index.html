@@ -1,0 +1,95 @@
+<!-- Firebase e Bootstrap CSS -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="container my-5">
+  <div class="text-center mb-5">
+    <h1 class="display-4 fw-bold text-primary">DENTAL 2.0</h1>
+    <p class="lead text-muted">Sistema de Gerenciamento de Pacientes</p>
+  </div>
+
+  <div class="d-flex gap-2 mb-4">
+    <button onclick="mostrarTela('cadastro')" class="btn btn-primary flex-fill">Cadastro</button>
+    <button onclick="mostrarTela('busca')" class="btn btn-success flex-fill">Buscar</button>
+    <button onclick="mostrarTela('listar')" class="btn btn-secondary flex-fill">Listar</button>
+  </div>
+
+  <div id="cadastro" class="card p-4 mb-4">
+    <h3 class="mb-3">Cadastrar Paciente</h3>
+    <div class="mb-3"><input id="prontuario" type="text" class="form-control" placeholder="Prontuário"></div>
+    <div class="mb-3"><input id="nome" type="text" class="form-control" placeholder="Nome"></div>
+    <div class="mb-3"><input id="apelido" type="text" class="form-control" placeholder="Apelido"></div>
+    <div class="mb-3"><input id="endereco" type="text" class="form-control" placeholder="Endereço"></div>
+    <div class="mb-3"><input id="bairro" type="text" class="form-control" placeholder="Bairro"></div>
+    <div class="mb-3"><input id="cidade" type="text" class="form-control" placeholder="Cidade"></div>
+    <div class="mb-3"><input id="estado" type="text" class="form-control" placeholder="Estado"></div>
+    <div class="mb-3"><input id="cep" type="text" class="form-control" placeholder="CEP"></div>
+    <div class="mb-3"><input id="indicacao" type="text" class="form-control" placeholder="Indicação"></div>
+    <div class="mb-3"><input id="telefone1" type="text" class="form-control" placeholder="Telefone 1"></div>
+    <div class="mb-3"><input id="telefone2" type="text" class="form-control" placeholder="Telefone 2"></div>
+    <div class="mb-3"><input id="rechamada" type="text" class="form-control" placeholder="Rechamada"></div>
+    <div class="mb-3"><input id="dataRechamada" type="date" class="form-control"></div>
+    <button onclick="salvarPaciente()" class="btn btn-primary w-100">Salvar</button>
+  </div>
+
+  <div id="busca" class="d-none card p-4 mb-4">
+    <h3 class="mb-3">Buscar Paciente</h3>
+    <div class="mb-3"><input id="buscaTermo" type="text" class="form-control" placeholder="Nome, Apelido ou Prontuário"></div>
+    <button onclick="buscarPacientes()" class="btn btn-success w-100">Buscar</button>
+    <ul id="resultadosBusca" class="list-group mt-3"></ul>
+  </div>
+
+  <div id="listar" class="d-none card p-4">
+    <h3 class="mb-4">Pacientes</h3>
+    <ul id="listaPacientes" class="list-group"></ul>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = { /* SUA CONFIG AQUI */ };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function mostrarTela(tela) {
+  ['cadastro','busca','listar'].forEach(id => document.getElementById(id).classList.add('d-none'));
+  document.getElementById(tela).classList.remove('d-none');
+}
+
+function salvarPaciente() {
+  const dados = {
+    prontuario: prontuario.value, nome: nome.value, apelido: apelido.value, endereco: endereco.value,
+    bairro: bairro.value, cidade: cidade.value, estado: estado.value, cep: cep.value, indicacao: indicacao.value,
+    telefone1: telefone1.value, telefone2: telefone2.value, rechamada: rechamada.value, dataRechamada: dataRechamada.value
+  };
+  db.collection("pacientes").add(dados).then(() => alert("Cadastrado!"));
+}
+
+function buscarPacientes() {
+  const termo = buscaTermo.value.toLowerCase();
+  resultadosBusca.innerHTML = '';
+  db.collection("pacientes").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      if ((p.nome||'').toLowerCase().includes(termo)|| (p.apelido||'').toLowerCase().includes(termo) || (p.prontuario||'').toLowerCase().includes(termo)) {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.innerHTML = `<strong>${p.nome}</strong> - ${p.prontuario}`;
+        resultadosBusca.appendChild(li);
+      }
+    });
+  });
+}
+
+function exportarJSON() {
+  db.collection("pacientes").get().then(snapshot => {
+    const dados=[];
+    snapshot.forEach(doc=>dados.push(doc.data()));
+    const blob = new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='pacientes.json';a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+</script>
